@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flashcards Árabe – Las Horas</title>
+  
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #1a1a2e;
+      color: #e8e0d0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 36px 20px 48px;
+    }
+
+    h1 {
+      font-family: Arial, sans-serif;
+      font-size: 42px;
+      font-weight: 700;
+      color: #f0c070;
+      letter-spacing: 1px;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      font-weight: 300;
+      color: #8a8090;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      font-family: Arial, sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 10px 28px;
+      border-radius: 30px;
+      border: 1px solid #3a3050;
+      background: transparent;
+      color: #e8e0d0;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.1s;
+    }
+
+    .btn:hover {
+      background: #2a2045;
+      border-color: #f0c070;
+      color: #f0c070;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn.active {
+      background: #f0c070;
+      color: #1a1a2e;
+      border-color: #f0c070;
+    }
+
+    .card-wrap {
+      width: 100%;
+      max-width: 620px;
+      height: 360px;
+      perspective: 1200px;
+      cursor: pointer;
+    }
+
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(.4,0,.2,1);
+    }
+
+    .card-inner.flipped { transform: rotateY(180deg); }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 36px;
+      text-align: center;
+    }
+
+    .face.front {
+      background: #12122a;
+      border: 1px solid #2e2850;
+    }
+
+    .face.back {
+      background: #1e1840;
+      border: 1px solid #f0c070;
+      transform: rotateY(180deg);
+    }
+
+    .clock-number {
+      font-size: 80px;
+      font-weight: 700;
+      color: #f0c070;
+      letter-spacing: 4px;
+      line-height: 1;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #4a4060;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .arabic-back {
+      font-family: Arial, sans-serif;
+      font-size: 32px;
+      direction: rtl;
+      color: #f0c070;
+      line-height: 1.4;
+    }
+
+    .pronunciation {
+      font-size: 16px;
+      font-style: italic;
+      color: #a090c0;
+      font-weight: 300;
+      line-height: 1.5;
+    }
+
+    .meaning {
+      font-size: 20px;
+      font-weight: 700;
+      color: #e8e0d0;
+    }
+
+    .help {
+      margin-top: 24px;
+      font-size: 11px;
+      color: #3a3050;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    @media (max-width: 500px) {
+      .clock-number { font-size: 58px; }
+      .arabic-back { font-size: 24px; }
+      .card-wrap { height: 320px; }
+      h1 { font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>الساعة</h1>
+  <div class="subtitle">Flashcards · Las horas en árabe</div>
+
+  <div class="controls">
+    <button class="btn" onclick="prevCard()">⬅ Anterior</button>
+    <button class="btn" onclick="flipCard()">🔄 Girar</button>
+    <button class="btn" onclick="nextCard()">Siguiente ➡</button>
+    <button class="btn" id="randomBtn" onclick="toggleRandom()">🔀 Aleatorio: NO</button>
+    <button class="btn" onclick="shuffleCards()">⇄ Mezclar</button>
+  </div>
+
+  <div class="card-wrap" onclick="flipCard()">
+    <div class="card-inner" id="card-inner">
+      <div class="face front" id="front"></div>
+      <div class="face back" id="back"></div>
+    </div>
+  </div>
+
+  <div class="help">espacio = girar · ← → = navegar</div>
+
+  <script>
+    const hours = [
+      { time: '00:00', arabic: 'السّاعة الثانية عشرة تماماً',       roman: 'as-saʿa ath-thaniya ʿashra tamaman',       meaning: 'las doce en punto' },
+      { time: '00:15', arabic: 'السّاعة الثانية عشرة والربع',        roman: 'as-saʿa ath-thaniya ʿashra wa r-rubʿ',     meaning: 'las doce y cuarto' },
+      { time: '00:20', arabic: 'السّاعة الثانية عشرة والثلث',        roman: 'as-saʿa ath-thaniya ʿashra wa th-thulth',  meaning: 'las doce y veinte' },
+      { time: '00:30', arabic: 'السّاعة الثانية عشرة والنصف',        roman: 'as-saʿa ath-thaniya ʿashra wa n-niṣf',     meaning: 'las doce y media' },
+      { time: '00:40', arabic: 'السّاعة الواحدة إلا الثلث',          roman: 'as-saʿa al-waḥida illa th-thulth',         meaning: 'la una menos veinte' },
+      { time: '00:45', arabic: 'السّاعة الواحدة إلا الربع',          roman: 'as-saʿa al-waḥida illa r-rubʿ',            meaning: 'la una menos cuarto' },
+      { time: '01:00', arabic: 'السّاعة الواحدة بالضبط',             roman: 'as-saʿa al-waḥida bi-ḍ-ḍabṭ',              meaning: 'la una en punto' },
+      { time: '01:15', arabic: 'السّاعة الواحدة والربع',             roman: 'as-saʿa al-waḥida wa r-rubʿ',              meaning: 'la una y cuarto' },
+      { time: '01:20', arabic: 'السّاعة الواحدة والثلث',             roman: 'as-saʿa al-waḥida wa th-thulth',           meaning: 'la una y veinte' },
+      { time: '01:30', arabic: 'السّاعة الواحدة والنصف',             roman: 'as-saʿa al-waḥida wa n-niṣf',              meaning: 'la una y media' },
+      { time: '01:40', arabic: 'السّاعة الثانية إلا الثلث',          roman: 'as-saʿa ath-thaniya illa th-thulth',       meaning: 'las dos menos veinte' },
+      { time: '01:45', arabic: 'السّاعة الثانية إلا الربع',          roman: 'as-saʿa ath-thaniya illa r-rubʿ',          meaning: 'las dos menos cuarto' },
+      { time: '02:00', arabic: 'السّاعة الثانية تماماً',             roman: 'as-saʿa ath-thaniya tamaman',              meaning: 'las dos en punto' },
+      { time: '02:15', arabic: 'السّاعة الثانية والربع',             roman: 'as-saʿa ath-thaniya wa r-rubʿ',            meaning: 'las dos y cuarto' },
+      { time: '02:20', arabic: 'السّاعة الثانية والثلث',             roman: 'as-saʿa ath-thaniya wa th-thulth',         meaning: 'las dos y veinte' },
+      { time: '02:30', arabic: 'السّاعة الثانية والنصف',             roman: 'as-saʿa ath-thaniya wa n-niṣf',            meaning: 'las dos y media' },
+      { time: '02:40', arabic: 'السّاعة الثالثة إلا الثلث',          roman: 'as-saʿa ath-thalitha illa th-thulth',      meaning: 'las tres menos veinte' },
+      { time: '02:45', arabic: 'السّاعة الثالثة إلا الربع',          roman: 'as-saʿa ath-thalitha illa r-rubʿ',         meaning: 'las tres menos cuarto' },
+      { time: '03:00', arabic: 'السّاعة الثالثة بالضبط',             roman: 'as-saʿa ath-thalitha bi-ḍ-ḍabṭ',           meaning: 'las tres en punto' },
+      { time: '03:15', arabic: 'السّاعة الثالثة والربع',             roman: 'as-saʿa ath-thalitha wa r-rubʿ',           meaning: 'las tres y cuarto' },
+      { time: '03:20', arabic: 'السّاعة الثالثة والثلث',             roman: 'as-saʿa ath-thalitha wa th-thulth',        meaning: 'las tres y veinte' },
+      { time: '03:30', arabic: 'السّاعة الثالثة والنصف',             roman: 'as-saʿa ath-thalitha wa n-niṣf',           meaning: 'las tres y media' },
+      { time: '03:40', arabic: 'السّاعة الرابعة إلا الثلث',          roman: 'as-saʿa ar-rabiʿa illa th-thulth',         meaning: 'las cuatro menos veinte' },
+      { time: '03:45', arabic: 'السّاعة الرابعة إلا الربع',          roman: 'as-saʿa ar-rabiʿa illa r-rubʿ',            meaning: 'las cuatro menos cuarto' },
+      { time: '04:00', arabic: 'السّاعة الرابعة تماماً',             roman: 'as-saʿa ar-rabiʿa tamaman',                meaning: 'las cuatro en punto' },
+      { time: '04:15', arabic: 'السّاعة الرابعة والربع',             roman: 'as-saʿa ar-rabiʿa wa r-rubʿ',              meaning: 'las cuatro y cuarto' },
+      { time: '04:20', arabic: 'السّاعة الرابعة والثلث',             roman: 'as-saʿa ar-rabiʿa wa th-thulth',           meaning: 'las cuatro y veinte' },
+      { time: '04:30', arabic: 'السّاعة الرابعة والنصف',             roman: 'as-saʿa ar-rabiʿa wa n-niṣf',              meaning: 'las cuatro y media' },
+      { time: '04:40', arabic: 'السّاعة الخامسة إلا الثلث',          roman: 'as-saʿa al-khamisa illa th-thulth',        meaning: 'las cinco menos veinte' },
+      { time: '04:45', arabic: 'السّاعة الخامسة إلا الربع',          roman: 'as-saʿa al-khamisa illa r-rubʿ',           meaning: 'las cinco menos cuarto' },
+      { time: '05:00', arabic: 'السّاعة الخامسة بالضبط',             roman: 'as-saʿa al-khamisa bi-ḍ-ḍabṭ',             meaning: 'las cinco en punto' },
+      { time: '05:15', arabic: 'السّاعة الخامسة والربع',             roman: 'as-saʿa al-khamisa wa r-rubʿ',             meaning: 'las cinco y cuarto' },
+      { time: '05:20', arabic: 'السّاعة الخامسة والثلث',             roman: 'as-saʿa al-khamisa wa th-thulth',          meaning: 'las cinco y veinte' },
+      { time: '05:30', arabic: 'السّاعة الخامسة والنصف',             roman: 'as-saʿa al-khamisa wa n-niṣf',             meaning: 'las cinco y media' },
+      { time: '05:40', arabic: 'السّاعة السادسة إلا الثلث',          roman: 'as-saʿa as-sadisa illa th-thulth',         meaning: 'las seis menos veinte' },
+      { time: '05:45', arabic: 'السّاعة السادسة إلا الربع',          roman: 'as-saʿa as-sadisa illa r-rubʿ',            meaning: 'las seis menos cuarto' },
+      { time: '06:00', arabic: 'السّاعة السادسة تماماً',             roman: 'as-saʿa as-sadisa tamaman',                meaning: 'las seis en punto' },
+      { time: '06:15', arabic: 'السّاعة السادسة والربع',             roman: 'as-saʿa as-sadisa wa r-rubʿ',              meaning: 'las seis y cuarto' },
+      { time: '06:20', arabic: 'السّاعة السادسة والثلث',             roman: 'as-saʿa as-sadisa wa th-thulth',           meaning: 'las seis y veinte' },
+      { time: '06:30', arabic: 'السّاعة السادسة والنصف',             roman: 'as-saʿa as-sadisa wa n-niṣf',              meaning: 'las seis y media' },
+      { time: '06:40', arabic: 'السّاعة السابعة إلا الثلث',          roman: 'as-saʿa as-sabiʿa illa th-thulth',         meaning: 'las siete menos veinte' },
+      { time: '06:45', arabic: 'السّاعة السابعة إلا الربع',          roman: 'as-saʿa as-sabiʿa illa r-rubʿ',            meaning: 'las siete menos cuarto' },
+      { time: '07:00', arabic: 'السّاعة السابعة بالضبط',             roman: 'as-saʿa as-sabiʿa bi-ḍ-ḍabṭ',              meaning: 'las siete en punto' },
+      { time: '07:15', arabic: 'السّاعة السابعة والربع',             roman: 'as-saʿa as-sabiʿa wa r-rubʿ',              meaning: 'las siete y cuarto' },
+      { time: '07:20', arabic: 'السّاعة السابعة والثلث',             roman: 'as-saʿa as-sabiʿa wa th-thulth',           meaning: 'las siete y veinte' },
+      { time: '07:30', arabic: 'السّاعة السابعة والنصف',             roman: 'as-saʿa as-sabiʿa wa n-niṣf',              meaning: 'las siete y media' },
+      { time: '07:40', arabic: 'السّاعة الثامنة إلا الثلث',          roman: 'as-saʿa ath-thamina illa th-thulth',       meaning: 'las ocho menos veinte' },
+      { time: '07:45', arabic: 'السّاعة الثامنة إلا الربع',          roman: 'as-saʿa ath-thamina illa r-rubʿ',          meaning: 'las ocho menos cuarto' },
+      { time: '08:00', arabic: 'السّاعة الثامنة تماماً',             roman: 'as-saʿa ath-thamina tamaman',              meaning: 'las ocho en punto' },
+      { time: '08:15', arabic: 'السّاعة الثامنة والربع',             roman: 'as-saʿa ath-thamina wa r-rubʿ',            meaning: 'las ocho y cuarto' },
+      { time: '08:20', arabic: 'السّاعة الثامنة والثلث',             roman: 'as-saʿa ath-thamina wa th-thulth',         meaning: 'las ocho y veinte' },
+      { time: '08:30', arabic: 'السّاعة الثامنة والنصف',             roman: 'as-saʿa ath-thamina wa n-niṣf',            meaning: 'las ocho y media' },
+      { time: '08:40', arabic: 'السّاعة التاسعة إلا الثلث',          roman: 'as-saʿa at-tasiʿa illa th-thulth',         meaning: 'las nueve menos veinte' },
+      { time: '08:45', arabic: 'السّاعة التاسعة إلا الربع',          roman: 'as-saʿa at-tasiʿa illa r-rubʿ',            meaning: 'las nueve menos cuarto' },
+      { time: '09:00', arabic: 'السّاعة التاسعة بالضبط',             roman: 'as-saʿa at-tasiʿa bi-ḍ-ḍabṭ',              meaning: 'las nueve en punto' },
+      { time: '09:15', arabic: 'السّاعة التاسعة والربع',             roman: 'as-saʿa at-tasiʿa wa r-rubʿ',              meaning: 'las nueve y cuarto' },
+      { time: '09:20', arabic: 'السّاعة التاسعة والثلث',             roman: 'as-saʿa at-tasiʿa wa th-thulth',           meaning: 'las nueve y veinte' },
+      { time: '09:30', arabic: 'السّاعة التاسعة والنصف',             roman: 'as-saʿa at-tasiʿa wa n-niṣf',              meaning: 'las nueve y media' },
+      { time: '09:40', arabic: 'السّاعة العاشرة إلا الثلث',          roman: 'as-saʿa al-ʿashira illa th-thulth',        meaning: 'las diez menos veinte' },
+      { time: '09:45', arabic: 'السّاعة العاشرة إلا الربع',          roman: 'as-saʿa al-ʿashira illa r-rubʿ',           meaning: 'las diez menos cuarto' },
+      { time: '10:00', arabic: 'السّاعة العاشرة تماماً',             roman: 'as-saʿa al-ʿashira tamaman',               meaning: 'las diez en punto' },
+      { time: '10:15', arabic: 'السّاعة العاشرة والربع',             roman: 'as-saʿa al-ʿashira wa r-rubʿ',             meaning: 'las diez y cuarto' },
+      { time: '10:20', arabic: 'السّاعة العاشرة والثلث',             roman: 'as-saʿa al-ʿashira wa th-thulth',          meaning: 'las diez y veinte' },
+      { time: '10:30', arabic: 'السّاعة العاشرة والنصف',             roman: 'as-saʿa al-ʿashira wa n-niṣf',             meaning: 'las diez y media' },
+      { time: '10:40', arabic: 'السّاعة الحادية عشرة إلا الثلث',     roman: 'as-saʿa al-ḥadiya ʿashra illa th-thulth',  meaning: 'las once menos veinte' },
+      { time: '10:45', arabic: 'السّاعة الحادية عشرة إلا الربع',     roman: 'as-saʿa al-ḥadiya ʿashra illa r-rubʿ',     meaning: 'las once menos cuarto' },
+      { time: '11:00', arabic: 'السّاعة الحادية عشرة بالضبط',        roman: 'as-saʿa al-ḥadiya ʿashra bi-ḍ-ḍabṭ',       meaning: 'las once en punto' },
+      { time: '11:15', arabic: 'السّاعة الحادية عشرة والربع',        roman: 'as-saʿa al-ḥadiya ʿashra wa r-rubʿ',       meaning: 'las once y cuarto' },
+      { time: '11:20', arabic: 'السّاعة الحادية عشرة والثلث',        roman: 'as-saʿa al-ḥadiya ʿashra wa th-thulth',    meaning: 'las once y veinte' },
+      { time: '11:30', arabic: 'السّاعة الحادية عشرة والنصف',        roman: 'as-saʿa al-ḥadiya ʿashra wa n-niṣf',       meaning: 'las once y media' },
+      { time: '11:40', arabic: 'السّاعة الثانية عشرة إلا الثلث',     roman: 'as-saʿa ath-thaniya ʿashra illa th-thulth', meaning: 'las doce menos veinte' },
+      { time: '11:45', arabic: 'السّاعة الثانية عشرة إلا الربع',     roman: 'as-saʿa ath-thaniya ʿashra illa r-rubʿ',    meaning: 'las doce menos cuarto' },
+    ];
+
+    let cards = [...hours];
+    let current = 0;
+    let randomMode = false;
+
+    function renderCard() {
+      const frontEl = document.getElementById('front');
+      const backEl  = document.getElementById('back');
+      document.getElementById('card-inner').classList.remove('flipped');
+
+      const c = cards[current];
+
+      frontEl.innerHTML = `
+        <div class="clock-number">${c.time}</div>
+        <div class="hint">toca para ver en árabe</div>
+      `;
+
+      backEl.innerHTML = `
+        <div class="arabic-back">${c.arabic}</div>
+        <div class="pronunciation">${c.roman}</div>
+        <div class="meaning">${c.meaning}</div>
+      `;
+    }
+
+    function flipCard() {
+      document.getElementById('card-inner').classList.toggle('flipped');
+    }
+
+    function nextCard() {
+      current = randomMode
+        ? Math.floor(Math.random() * cards.length)
+        : (current + 1) % cards.length;
+      renderCard();
+    }
+
+    function prevCard() {
+      current = randomMode
+        ? Math.floor(Math.random() * cards.length)
+        : (current - 1 + cards.length) % cards.length;
+      renderCard();
+    }
+
+    function shuffleCards() {
+      for (let i = cards.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cards[i], cards[j]] = [cards[j], cards[i]];
+      }
+      current = 0;
+      renderCard();
+    }
+
+    function toggleRandom() {
+      randomMode = !randomMode;
+      const btn = document.getElementById('randomBtn');
+      btn.textContent = `🔀 Aleatorio: ${randomMode ? 'SÍ' : 'NO'}`;
+      btn.classList.toggle('active', randomMode);
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Space') { e.preventDefault(); flipCard(); }
+      if (e.key === 'ArrowRight') nextCard();
+      if (e.key === 'ArrowLeft') prevCard();
+    });
+
+    renderCard();
+  </script>
+
+</body>
+</html>
